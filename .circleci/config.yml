@@ -216,7 +216,7 @@ jobs:
       - checkout
       - install_ansible
       - add_ssh_keys:
-          fingerprints: ["e6:2b:4e:9b:0e:11:ac:62:2f:59:01:bd:67:02:81:1d"]
+          fingerprints: ["da:19:d8:d4:1a:c1:dc:d3:a9:e1:1e:4b:5c:f4:0f:64"]
       - attach_workspace:
           at: ~/
       - run:
@@ -234,9 +234,9 @@ jobs:
             ls -la
             cat inventory.txt
             ansible-playbook -i inventory.txt configure-server.yml
-      - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-          event: on_fail
+      #- destroy-environment:
+         # workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+          #event: on_fail
   run-migrations:
     docker:
       - image: circleci/node:13.8.0
