@@ -214,7 +214,7 @@ jobs:
       # python:3.9.0-alpine
     steps:
       - checkout
-      - install_ansible:
+      - install_ansible
       - add_ssh_keys:
           fingerprints: ["38:f9:ba:5a:72:41:5c:c1:16:b3:b9:3e:09:10:53:f9:66:0f:44:31"]
       - attach_workspace:
