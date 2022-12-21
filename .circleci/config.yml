@@ -35,6 +35,7 @@ commands:
     parameters:
       workflow_id:
         type: string
+        default: ${CIRCLE_WORKFLOW_ID:0:7}
       event:
         type: string
     steps:
@@ -49,6 +50,7 @@ commands:
           event: on_fail
           command: |
             echo "Destroying frontend environment: << parameters.workflow_id >>"
+            aws s3 rm s3://udapeople-<< parameters.workflow_id >> --recursive
             aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.workflow_id >>
   revert_migrations:
     description: Revert the last migration if successfully run in the current workflow.
