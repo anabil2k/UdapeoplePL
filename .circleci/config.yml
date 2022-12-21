@@ -208,21 +208,23 @@ jobs:
 
   configure-infrastructure:
     docker:
-      - image: python:3.9.0-alpine
+      - image: cimg/base:stable
+      #python:3.9.0-alpine
       # python:3.7-alpine3.11
       # python:3.9.0-alpine
     steps:
       - checkout
+      - install_ansible:
       - add_ssh_keys:
           fingerprints: ["38:f9:ba:5a:72:41:5c:c1:16:b3:b9:3e:09:10:53:f9:66:0f:44:31"]
-      # attach workspace
       - attach_workspace:
-          at: .
+          at: ~/
       - run:
-          name: Install dependencies
+          name: check inventory and ansible version
+          #name: Install dependencies
           working_directory: ./.circleci/ansible
           command: |
-            apk add --update ansible
+            cat inventory.txt
             ansible --version
       - run:
           name: Configure server
@@ -365,11 +367,11 @@ workflows:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
       - configure-infrastructure:
           requires: [deploy-infrastructure]
-      - run-migrations:
-          requires: [configure-infrastructure]
-      - deploy-frontend:
-          requires: [run-migrations]
-      - deploy-backend:
-          requires: [run-migrations]
+      #- run-migrations:
+          #requires: [configure-infrastructure]
+      #- deploy-frontend:
+          #requires: [run-migrations]
+      #- deploy-backend:
+          #requires: [run-migrations]
       #- notify_on_success:
           #requires: [configure-infrastructure]
