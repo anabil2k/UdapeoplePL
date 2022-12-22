@@ -36,18 +36,16 @@ commands:
       workflow_id:
         type: string
         default: ${CIRCLE_WORKFLOW_ID:0:7}
-      event:
-        type: string
     steps:
       - run:
           name: Destroy backend environment
-          event: on_fail
+          when: on_fail
           command: |
             echo "Destroying backend environment: << parameters.workflow_id >>"
             aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.workflow_id >>
       - run:
           name: Destroy frontend environment
-          event: on_fail
+          when: on_fail
           command: |
             echo "Destroying frontend environment: << parameters.workflow_id >>"
             aws s3 rm s3://udapeople-<< parameters.workflow_id >> --recursive
@@ -57,22 +55,22 @@ commands:
     parameters:
       workflow_id:
         type: string
-      event:
-        type: string
     steps:
       - run:
           name: Revert migrations
-          working_directory: ./backend
+          when: on_fail
+          #working_directory: ./backend
           command: |
-            SUCCESS=$(curl https://kvdb.io/L8neEQuZDAAa2yG2UAyXKZ/migration_<< parameters.workflow_id >>)
+            SUCCESS=$(curl https://kvdb.io/${kvdb_bucket}/migration_<< parameters.workflow_id >>)
             echo $SUCCESS
-            if [[ "$SUCCESS" == "success" ]]
+            if (( "$SUCCESS" == 1 ))
             then
+              cd ~/project/backend
               pwd
               ls -la
+              npm install
               npm run migrations:revert
             fi
-          event: << parameters.event >>
     
 jobs:
   build-frontend:
@@ -201,7 +199,7 @@ jobs:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
-      #- destroy-environment:
+      - destroy-environment
           #workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
           #event: on_fail
       #- notify_on_failure
@@ -234,14 +232,15 @@ jobs:
             ls -la
             cat inventory.txt
             ansible-playbook -i inventory.txt configure-server.yml
-      #- destroy-environment:
+      - destroy-environment
          # workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
           #event: on_fail
   run-migrations:
     docker:
-      - image: circleci/node:13.8.0
+      - image: cimg/node:13.8.0
     steps:
       - checkout
+      - install_aws_cli_v2
       - run:
           name: Run migrations
           command: |
@@ -253,8 +252,10 @@ jobs:
           command: |
             if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
             then
-                curl https://kvdb.io/L8neEQuZDAAa2yG2UAyXKZ/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'    
+              curl https://kvdb.io/${kvdb_bucket}/migration_${CIRCLE_WORKFLOW_ID:0:7} -d '1'    
             fi
+      - destroy-environment
+      - revert-migrations
      # Here's where you will add some code to rollback on failure      
 
   deploy-frontend:
@@ -289,12 +290,8 @@ jobs:
             npm run build
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp ./dist "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive
-      - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-          event: on_fail
-      - revert_migrations:
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-          event: on_fail
+      - destroy-environment
+      - revert_migrations
 
   deploy-backend:
     docker:
@@ -330,12 +327,8 @@ jobs:
             echo "Contents  of the inventory.txt file is -------"
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
-      - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-          event: on_fail
-      - revert_migrations:
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-          event: on_fail
+      - destroy-environment
+      - revert_migrations
 
 
 
@@ -367,8 +360,8 @@ workflows:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
       - configure-infrastructure:
           requires: [deploy-infrastructure]
-      #- run-migrations:
-          #requires: [configure-infrastructure]
+      - run-migrations:
+          requires: [configure-infrastructure]
       #- deploy-frontend:
           #requires: [run-migrations]
       #- deploy-backend:
