@@ -29,7 +29,7 @@ commands:
             sudo apt install software-properties-common -y
             sudo add-apt-repository --yes --update ppa:ansible/ansible
             sudo apt install ansible -y
-  install_nodejs_13.8:
+  install_nodejs:
     description: install nodejs 13.8
     steps:
       - run:
@@ -321,7 +321,7 @@ jobs:
       - checkout
       - install_aws_cli_v2
       - install_ansible
-      - install_nodejs_13.8
+      - install_nodejs
       # Add ssh keys with fingerprint
       - add_ssh_keys:
           fingerprints: ["da:19:d8:d4:1a:c1:dc:d3:a9:e1:1e:4b:5c:f4:0f:64"]
