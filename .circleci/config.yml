@@ -279,7 +279,6 @@ jobs:
       - checkout
       - install_aws_cli_v2
       - install_ansible
-      - run: yum -y install tar gzip
       - restore_cache:
           keys: [frontend-build]
       #- attach_workspace:
@@ -329,11 +328,6 @@ jobs:
       - attach_workspace:
           #at: .
           at: ~/
-      - run:
-          name: Install dependencies
-          command: |
-            yum -y install tar gzip
-            ansible --version
       - restore_cache:
           keys: [backend-build]
       - run:
