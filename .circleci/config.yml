@@ -351,6 +351,76 @@ jobs:
       - destroy-environment
       - revert-migrations
 
+  smoke-test:
+    docker:
+      - image: cimg/base:stable 
+    steps:
+      - checkout
+      - install_aws_cli_v2
+      - install_nodejs
+      - run:
+          name: Backend smoke test.
+          command: |
+            export BACKEND_IP=$(aws ec2 describe-instances \
+              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --output text)
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "API_URL = ${API_URL}"
+            if curl "${API_URL}/api/status" | grep "ok"
+            then
+              return 0
+            else
+              return 1
+            fi
+      - run:
+          name: Frontend smoke test.
+          command: |
+            URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-${AWS_DEFAULT_REGION}.amazonaws.com/#/employees"            
+            echo ${URL} 
+            if curl -s ${URL} | grep "Welcome"
+            then
+              return 1
+            else
+              return 2
+            fi
+      - destroy-environment
+      - revert-migrations
+
+
+  cloudfront-update:
+    docker:
+      # Docker image here that supports AWS CLI
+    steps:
+      # Checkout code from git
+      - run:
+          name: Install dependencies
+          command: |
+            # your code here
+      - run:
+          name: Update cloudfront distribution
+          command: |
+            # your code here
+      # Here's where you will add some code to rollback on failure  
+
+cleanup:
+    docker:
+      # Docker image here
+    steps:
+      # Checkout code from git
+      - run:
+          name: Get old stack workflow id
+          command: |
+            # your code here
+            export OldWorkflowID="the id here"
+            export STACKS=[] #put the list of stacks here
+      - run:
+          name: Remove old stacks and files
+          command: |
+            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
+            then
+              # your code here
+            fi
 
 
 
@@ -389,3 +459,9 @@ workflows:
           requires: [run-migrations]
       #- notify_on_success:
           #requires: [configure-infrastructure]
+      - smoke-test:
+          requires: [deploy-backend, deploy-frontend]
+      #- cloudfront-update:
+          #requires: [smoke-test]
+      #- cleanup:
+          #requires: [cloudfront-update]
