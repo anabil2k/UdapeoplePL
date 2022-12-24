@@ -278,7 +278,7 @@ jobs:
       # Checkout code from git
       - checkout
       - install_aws_cli_v2
-      - install_ansible
+      - install_nodejs
       - restore_cache:
           keys: [frontend-build]
       #- attach_workspace:
@@ -415,10 +415,10 @@ workflows:
           requires: [deploy-infrastructure]
       - run-migrations:
           requires: [configure-infrastructure]
-      - deploy-frontend:
-          requires: [run-migrations]
       - deploy-backend:
           requires: [run-migrations]
+      - deploy-frontend:
+          requires: [run-migrations, deploy-backend]
       #- notify_on_success:
           #requires: [configure-infrastructure]
       - smoke-test:
