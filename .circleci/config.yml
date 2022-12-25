@@ -396,12 +396,12 @@ jobs:
       - run:
           name: Get old stack workflow id and Saving it to kvdb
           command: |
-            export OLD_WORKFLOW_ID=$(aws cloudformation \
+            export OldWorkflowID=$(aws cloudformation \
               list-exports --query "EXPORTS[?Name==\`WorkflowID\`].Value" \
               --no-paginate --output text)
-            echo "Old Workflow ID: $OLD_WORKFLOW_ID"
-            echo CIRCLE_WORKFLOW_ID "${CIRCLE_WORKFLOW_ID:0:7}"
-            curl https://kvdb.io/${kvdb_bucket}/old_workflow_id -d "${CIRCLE_WORKFLOW_ID:0:7}"   
+            echo "Old Workflow ID: $OldWorkflowID"
+            echo CIRCLE_WORKFLOW_ID: "${CIRCLE_WORKFLOW_ID:0:7}"
+            curl https://kvdb.io/${kvdb_bucket}/old_workflow_id -d "${OldWorkflowID}"   
       - run:
           name: Update cloudfront distribution
           command: |
@@ -410,6 +410,7 @@ jobs:
               --stack-name InitialStack \
               --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
               --tags project=udapeople
+            echo CIRCLE_WORKFLOW_ID: "${CIRCLE_WORKFLOW_ID:0:7}"
       # Here's where you will add some code to rollback on failure
       - destroy-environment
       - revert-migrations
@@ -429,7 +430,7 @@ jobs:
               --no-paginate --output text))
             echo Stack names: "${STACKS[@]}"
             export OldWorkflowID=$(curl --insecure https://kvdb.io/${kvdb_bucket}/old_workflow_id)
-            echo "Old Workflow ID: $OLD_WORKFLOW_ID"
+            echo "Old Workflow ID: $OldWorkflowID"
             if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
             then
               aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
