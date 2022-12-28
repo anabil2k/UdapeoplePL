@@ -18,6 +18,7 @@
     pm2 start main.js
   register: execute_node
 - name: "Configuring pm2 to start as a service"
-  become: true
+  #become: true
   shell: |
-    env PATH=$PATH:/usr/local/bin pm2 startup systemd -u upuntu --hp /home/ubuntu
+    sudo su -c "env PATH=$PATH:/usr/local/bin pm2 startup systemd -u upuntu --hp /home/ubuntu"
+    pm2 save
